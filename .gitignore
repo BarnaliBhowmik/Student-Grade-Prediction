@@ -218,3 +218,27 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Local project environment
+.venv/
+
+# Dataset files - keep raw data out of GitHub
+data/*.csv
+
+# Trained models
+models/*
+
+# Keep the models directory in Git
+!models/.gitkeep
+
+# Environment variables and local secrets
+.env
+
+# Python and test caches
+__pycache__/
+.pytest_cache/
+
+# UCI dataset files and supporting data
+data/*
+
+# Keep instructions in the data folder tracked
+!data/README.md
