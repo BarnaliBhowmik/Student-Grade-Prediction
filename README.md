@@ -1,5 +1,6 @@
 
 # Student Grade Prediction Using Decision Trees
+<img width="1983" height="793" alt="Student Grade Prediction Banner" src="https://github.com/user-attachments/assets/3473350a-0689-477d-908e-81ba42866c7a" />
 
 ## 1. Project Overview
 
