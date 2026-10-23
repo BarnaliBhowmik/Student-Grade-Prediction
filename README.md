@@ -1,102 +1,170 @@
 
-# C4.5-Based Student Grade Prediction
+# Student Grade Prediction Using Decision Trees
 
-A machine learning project that predicts student academic performance using a decision tree based on the C4.5 algorithm and the UCI Student Performance dataset.
+## 1. Project Overview
 
-## Overview
+**Objective:** Predict student academic performance categories using machine learning classification.
 
-This project explores how student academic records and other relevant factors can be used to predict final academic performance.
+- **Dataset:** UCI Student Performance — Mathematics
+- **Records:** 395 students
+- **Input features:** Demographic, social, school-related, and academic attributes
+- **Target:** Fail, Satisfactory, Good, Excellent
+- **Models:** Custom C4.5-style, Gini, and Entropy decision trees
+- **Status:** Model comparison and initial tuning completed; final evaluation pending.
 
-The model will use the C4.5 decision tree approach, which selects splits using the gain ratio. The implementation will be developed and tested in Python before being integrated into a web application.
+## 2. Problem Statement
 
-## Objectives
+Predict students' final mathematics performance category from available student attributes. Compare performance with and without previous grades (G1 and G2) to assess their predictive contribution.
 
-- Explore and preprocess student performance data.
-- Implement C4.5-style decision tree splitting using gain ratio.
-- Predict student performance categories from selected input features.
-- Evaluate the model on unseen data.
-- Visualize decision rules and model performance.
-- Develop a web application for entering student information and viewing predictions.
+## 3. Dataset and Preprocessing
 
-## Dataset
+| Property | Details |
+|---|---|
+| Dataset size | 395 rows, 33 columns |
+| Missing values | None found |
+| Target | `grade_category`, derived from G3 |
+| Fail | G3 = 0–9 |
+| Satisfactory | G3 = 10–13 |
+| Good | G3 = 14–16 |
+| Excellent | G3 = 17–20 |
 
-**Source:** UCI Machine Learning Repository
+**Leakage prevention:** `G3` and `grade_category` are excluded from input features. G1 and G2 are included only in the experiment that uses previous grades.
 
-**Dataset:** Student Performance
+## 4. Methodology
 
-**File:** `student-mat.csv`
+1. Inspect and preprocess the dataset.
+2. Prepare features with and without G1/G2.
+3. Implement a custom C4.5-style decision tree using entropy, information gain, and gain ratio.
+4. Compare it with standard Gini and Entropy decision trees.
+5. Evaluate using accuracy, macro F1, classification reports, and confusion matrices.
+6. Perform stratified five-fold cross-validation.
+7. Tune hyperparameters using GridSearchCV.
+8. Implement a separate train-validation-test evaluation workflow.
 
-Official source:
-https://archive.ics.uci.edu/dataset/320/student+performance
+## 5. Model Comparison
 
-The dataset contains student demographic, social, school-related, and academic information. The `G3` attribute represents the final grade, scored from 0 to 20.
+### Experiment A: With Previous Grades
 
-The project will document its feature selection, target-label definitions, and preprocessing decisions.
+| Model | Accuracy | Macro F1 |
+|---|---:|---:|
+| Custom C4.5-style | 59.49% | 0.6358 |
+| Gini | **79.75%** | **0.8174** |
+| Entropy | 75.95% | 0.7588 |
 
-## Methodology
+### Experiment B: Without Previous Grades
 
-1. Load and inspect the dataset.
-2. Clean and preprocess the data.
-3. Define the prediction target and input features.
-4. Implement decision tree splitting using gain ratio.
-5. Train and evaluate the model.
-6. Analyze decision rules and prediction errors.
-7. Integrate the model into a web application.
+| Model | Accuracy | Macro F1 |
+|---|---:|---:|
+| Custom C4.5-style | **40.51%** | 0.2197 |
+| Gini | 39.24% | **0.3791** |
+| Entropy | 36.71% | 0.3120 |
 
-## Evaluation
+**Finding:** Prediction performance decreased substantially without G1 and G2.
 
-The model will be evaluated using appropriate classification metrics, including:
+## 6. Five-Fold Cross-Validation
 
-- Accuracy
-- Precision
-- Recall
-- F1-score
-- Confusion matrix
+| Model | Mean Accuracy | Mean Macro F1 |
+|---|---:|---:|
+| Custom C4.5-style — with G1/G2 | 0.5544 | 0.5733 |
+| Gini — with G1/G2 | **0.8152 ± 0.0405** | **0.8347** |
+| Entropy — with G1/G2 | 0.8076 ± 0.0449 | 0.8134 |
+| Custom C4.5-style — without G1/G2 | 0.4278 | 0.2341 |
+| Gini — without G1/G2 | 0.4101 ± 0.0062 | **0.3084** |
+| Entropy — without G1/G2 | 0.3772 ± 0.0539 | 0.3003 |
 
-A baseline model will be used for comparison. Data leakage and the effect of using earlier-period grades will also be investigated.
+**Finding:** The standard Gini tree achieved the highest mean macro F1 in both experiments.
 
-## Technology Stack
+## 7. Hyperparameter Tuning
+
+GridSearchCV evaluated 80 parameter configurations using five-fold stratified cross-validation, optimizing macro F1.
+
+| Parameter | Selected Value |
+|---|---|
+| Criterion | Gini |
+| Maximum depth | 5 |
+| Minimum samples per leaf | 6 |
+| Minimum samples to split | 2 |
+| Mean CV accuracy | 0.8582 |
+| Mean CV macro F1 | **0.8665** |
+| Macro F1 standard deviation | 0.0456 |
+
+These are cross-validation results, not independent test results.
+
+## 8. Baseline vs Tuned Model
+
+Results from the initial 80/20 train-test evaluation:
+
+| Metric | Baseline Gini | Tuned Gini |
+|---|---:|---:|
+| Accuracy | 79.75% | **84.81%** |
+| Macro F1 | 0.8174 | **0.8614** |
+| Correct predictions | 63/79 | **67/79** |
+
+The tuned model improved accuracy by **5.06 percentage points** and macro F1 by **0.0440**.
+
+### Tuned Model: Class-Wise Performance
+
+| Class | Precision | Recall | F1-score |
+|---|---:|---:|---:|
+| Fail | 1.00 | 0.58 | 0.73 |
+| Satisfactory | 0.75 | 1.00 | 0.86 |
+| Good | 0.94 | 1.00 | 0.97 |
+| Excellent | 1.00 | 0.80 | 0.89 |
+
+**Observation:** Good-class F1 was 0.97, while Fail recall was 0.58. The model missed some students in the Fail category. Excellent-class metrics are based on only five test examples.
+
+**Evaluation limitation:** Hyperparameter tuning occurred before the final test split was established. Therefore, the reported 84.81% accuracy is provisional and not a fully independent estimate of generalization performance.
+
+## 9. Tech Stack
 
 - Python
 - Pandas and NumPy
-- Scikit-learn for evaluation and baseline models
+- scikit-learn
 - Matplotlib
-- Flask
-- HTML, CSS, and Bootstrap
 - Git and GitHub
+- Flask (planned)
 
-## Planned Project Structure
+## 10. Project Structure
 
 ```text
-C45-Student-Grade-Prediction/
+Student-Grade-Prediction/
 ├── data/
 ├── models/
 ├── notebooks/
 ├── src/
-├── templates/
+│   ├── inspect_data.py
+│   ├── prepare_data.py
+│   ├── prepare_features.py
+│   ├── c45_tree.py
+│   ├── train_model.py
+│   ├── compare_models.py
+│   ├── cross_validate.py
+│   ├── evaluate_model.py
+│   ├── tune_model.py
+│   ├── final_evaluation.py
+│   └── plot_results.py
 ├── static/
+├── templates/
 ├── tests/
-├── app.py
-├── requirements.txt
-├── .gitignore
 └── README.md
 ```
 
-## Current Status
+## 11. Future Work
 
-Project setup and dataset preparation.
+- [ ] Implement stratified 80–10–10 train-validation-test splitting.
+- [ ] Tune hyperparameters using training data and validation results only.
+- [ ] Evaluate the selected model on the untouched test set.
+- [ ] Regenerate final metrics and confusion matrix.
+- [ ] Add automated tests.
+- [ ] Build a Flask prediction interface.
+- [ ] Update results after final evaluation.
 
-The C4.5 implementation, model evaluation, and web application are planned development stages.
+## 12. Conclusion
 
-## Limitations
+The best observed result so far is **84.81% accuracy and 0.8614 macro F1** from the tuned Gini tree. Five-fold cross-validation also favored the standard Gini implementation over the custom C4.5-style tree.
 
-The dataset represents students in Portuguese schools. Predictions may not generalize to other educational systems or student populations.
+Previous academic grades substantially improved prediction performance. The next priority is a leakage-conscious train-validation-test evaluation before reporting final model performance.
 
-Predictions are estimates, not guarantees of academic outcomes. The model is intended for educational analysis and should not be used as the sole basis for high-stakes decisions about students.
+---
 
-## Acknowledgements
-
-Dataset provided by the UCI Machine Learning Repository.
-
-Dataset reference:
-Cortez, P., & Silva, A. M. G. (2008). Using Data Mining to Predict Secondary School Student Performance.
+*Results reflect experiments completed so far. Final metrics will be updated after the evaluation workflow is corrected.*
